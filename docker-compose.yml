@@ -41,10 +41,14 @@ services:
       - ./data/ILIAS:/tiltr/ILIAS
       - ./data/tmp:/tiltr/tmp
     working_dir: /tiltr/app
-    entrypoint: python3 -m tiltr --master $TILTR_ARGUMENTS
+    entrypoint: /bin/bash -c "source /root/venv/bin/activate && python3 -m tiltr --master $TILTR_ARGUMENTS"
+    #entrypoint: python3 -m tiltr --master $TILTR_ARGUMENTS
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONIOENCODING='utf8'
+      - ILIAS_URL=${ILIAS_URL}
+      - ILIAS_ADMIN_USER=${ILIAS_ADMIN_USER}
+      - ILIAS_ADMIN_PASSWORD=${ILIAS_ADMIN_PASSWORD}
     networks:
       - net
   
@@ -54,7 +58,8 @@ services:
       - ./docker/machine/app:/tiltr/app
       - ./data/tests:/tiltr/tests
     working_dir: /tiltr/app
-    entrypoint: python3 -m tiltr --machine $TILTR_ARGUMENTS
+    entrypoint: /bin/bash -c "source /root/venv/bin/activate && python3 -m tiltr --machine $$TILTR_ARGUMENTS"
+    #    entrypoint: python3 -m tiltr --machine $TILTR_ARGUMENTS
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONIOENCODING='utf8'

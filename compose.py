@@ -22,6 +22,14 @@ import webbrowser
 from threading import Thread
 from collections import defaultdict
 
+from dotenv import load_dotenv
+### the following lines try to get Variables either from .env or otherwise into this ... 
+load_dotenv()  # This loads the variables from '.env' into os.environ
+
+ilias_url = os.getenv('ILIAS_URL')
+ilias_admin_user = os.getenv('ILIAS_ADMIN_USER')
+ilias_admin_password = os.getenv('ILIAS_ADMIN_PASSWORD')
+
 try:
 	import termcolor
 	cprint = termcolor.cprint
@@ -202,14 +210,14 @@ def instrument_ilias():
 	# sub directories)
 
 	os.chdir(base)
-	os.system('docker-compose run --rm -T web sh -c "chmod 777 /var/www/html/ILIAS/data/ilias/mobs"')
+	os.system('docker compose run --rm -T web sh -c "chmod 777 /var/www/html/ILIAS/data/ilias/mobs"')
 
 	# make sure compose libs under ILIAS/libs/composer are initialized.
 
 	if not os.path.exists(os.path.join(ilias_path, "libs", "composer", "vendor", "autoload.php")):
 		print("runnning php composer to install php libraries...")
 		os.chdir(base)
-		os.system('docker-compose run --rm -u restricted_user -T web sh -c "cd /var/www/html/ILIAS/libs/composer && php /var/www/html/composer.phar --no-plugins --no-scripts install"')
+		os.system('docker compose run --rm -u restricted_user -T web sh -c "cd /var/www/html/ILIAS/libs/composer && php /var/www/html/composer.phar --no-plugins --no-scripts install"')
 
 	return ilias_path
 
@@ -271,19 +279,19 @@ docker_compose_args = []
 print(os.path.join(base, "docker", "docker-compose.yml"))
 
 if args.command == 'stop':
-	subprocess.call(["docker-compose", *docker_compose_args, "stop"])
+	subprocess.call(["docker","compose", *docker_compose_args, "stop"])
 	sys.exit(0)
 elif args.command == 'ps':
-	subprocess.call(["docker-compose", *docker_compose_args, "ps"])
+	subprocess.call(["docker","compose", *docker_compose_args, "ps"])
 	sys.exit(0)
 elif args.command != 'up':
 	print("illegal command %s." % args.command)
 	sys.exit(1)
 
 if args.rebuild_no_cache:
-	subprocess.call(["docker-compose", *docker_compose_args, "build", "--no-cache"])
+	subprocess.call(["docker","compose", *docker_compose_args, "build", "--no-cache"])
 elif args.rebuild:
-	subprocess.call(["docker-compose", *docker_compose_args, "build"])
+	subprocess.call(["docker","compose", *docker_compose_args, "build"])
 
 tmp_path = os.path.join(base, "data", "tmp")
 if not os.path.exists(tmp_path):
@@ -352,12 +360,14 @@ def check_errors(pipe, output):
 # start up docker.
 compose_stderr = []
 compose = subprocess.Popen([
-		"docker-compose",
+		"docker","compose",
 		*docker_compose_args,
 		"up",
 	 	"--scale", "machine=%d" % args.n],
 	stdout=subprocess.PIPE,
+#	stderr=subprocess.PIPE)
 	stderr=subprocess.PIPE,
+# due to an error with reference to the following line remove bufsize to test if it runs without and remove , above and add) does not help  problem is there is no file or directory docker-compose maybe because this is alma not ubuntu=
 	bufsize=1)
 
 if not args.verbose:
@@ -392,7 +402,7 @@ def terminate():
 
 	print("")
 	print("Please wait while docker-compose is shutting down.", flush=True)
-	subprocess.call(["docker-compose", "stop"])
+	subprocess.call(["docker","compose", "stop"])
 
 	if monitor_thread:
 		monitor_thread.join()
@@ -439,7 +449,7 @@ try:
 		print("Preparing ILIAS. This might take a while. ", end='', flush=True)
 		spinning_cursor.show()
 		with open(os.devnull, 'w') as f:
-			subprocess.call(["docker-compose", "exec", "web", "ilias-startup.sh"], stdout=f)
+			subprocess.call(["docker","compose", "exec", "web", "ilias-startup.sh"], stdout=f)
 		spinning_cursor.hide()
 		print('')
 
@@ -450,7 +460,7 @@ try:
 		pass  # ignore
 
 	def get_container_id(container_name):
-		return subprocess.check_output(["docker-compose", "ps", "-q", container_name]).decode('utf8').strip()
+		return subprocess.check_output(["docker","compose", "ps", "-q", container_name]).decode('utf8').strip()
 
 	master_container_id = get_container_id("master")
 
